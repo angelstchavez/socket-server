@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MiniChat</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      #chat {
+        border: 1px solid #ddd;
+        padding: 10px;
+        height: 300px;
+        overflow-y: scroll;
+        margin-bottom: 20px;
+      }
+      #messageForm {
+        display: flex;
+        gap: 10px;
+      }
+      #messageForm input {
+        flex: 1;
+        padding: 10px;
+        font-size: 16px;
+      }
+      #messageForm button {
+        padding: 10px 20px;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>MiniChat</h1>
+    <div id="chat"></div>
+    <form id="messageForm">
+      <input
+        type="text"
+        id="messageInput"
+        placeholder="Type your message..."
+        required
+      />
+      <button type="submit">Send</button>
+    </form>
+
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.js"
+      integrity="sha512-luMnTJZ7oEchNDZAtQhgjomP1eZefnl82ruTH/3Oj/Yu5qYtwL7+dVRccACS/Snp1lFXq188XFipHKYE75IaQQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script>
+      const socket = io("http://localhost:8080");
+      const chat = document.getElementById("chat");
+      const messageForm = document.getElementById("messageForm");
+      const messageInput = document.getElementById("messageInput");
+
+      // Handle welcome message from server
+      socket.on("Welcome", (data) => {
+        const formattedTime = formatTime(new Date(data.date));
+        appendMessage(`Servidor: ${data.message} (${formattedTime})`);
+      });
+
+      // Send message from the client to the server
+      messageForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const message = messageInput.value;
+        const formattedTime = formatTime(new Date());
+
+        // Emit the message to the server
+        socket.emit("Client", {
+          message: message,
+          date: new Date(),
+        });
+
+        // Append message to the chat
+        appendMessage(`Tú: ${message} (${formattedTime})`);
+
+        // Clear input field
+        messageInput.value = "";
+      });
+
+      // Function to append messages to the chat div
+      function appendMessage(message) {
+        const messageElement = document.createElement("div");
+        messageElement.textContent = message;
+        chat.appendChild(messageElement);
+        chat.scrollTop = chat.scrollHeight;
+      }
+
+      // Function to format time as 12-hour format with AM/PM
+      function formatTime(date) {
+        return date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+      }
+    </script>
+  </body>
+</html>
